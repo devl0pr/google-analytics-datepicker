@@ -285,11 +285,12 @@
         .calendar-day {
             cursor: pointer;
             position: relative;
+            margin: 2px 0;
         }
 
         .calendar-day span {
             display: block;
-            padding: 8px 5px;
+            padding: 7px 3px;
             width: 30px;
         }
 
@@ -297,6 +298,64 @@
             background: #1a73e84d;
             border-radius: 50%;
         }
+
+        .range-blue  {
+            background-color: #e8f0fe;
+            color: white;
+        }
+
+        .range-green {
+            background-color: #a8dab5;
+        }
+
+        .range-blue-start
+        {
+            border-bottom-left-radius: 15px;
+            border-top-left-radius: 15px;
+        }
+
+        .range-blue-end
+        {
+            border-bottom-right-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .range-blue-start span, .range-blue-end span {
+            background-color: #1a73e8;
+            color: white;
+            border-radius: 50%;
+        }
+
+        .range-green-start span, .range-green-end span {
+            background-color: #46a35e;
+            color: white;
+            border-radius: 50%;
+        }
+
+        .range-orange-start {
+            border-bottom-left-radius: 15px;
+            border-top-left-radius: 15px;
+            background-color: #f9ab0033
+        }
+
+        .range-orange-end {
+            border-bottom-right-radius: 15px;
+            border-top-right-radius: 15px;
+            background-color: #f9ab0033
+        }
+
+        .range-orange-start span {
+            /*background-color: #f9ab0033;*/
+        }
+
+        .range-orange-end span {
+            /*background-color: #f9ab0033;*/
+        }
+
+        .range-orange {
+            background-color: #f9ab0033
+        }
+
     </style>
 </head>
 <body>
@@ -308,8 +367,6 @@
             <div class="datepicker-helper">
                 <div class="main-date-helper">
                     <div class="active">Custom</div>
-                    <div>Today</div>
-                    <div>Yesterday</div>
                     <div>This week</div>
                     <div>Last week</div>
                     <div>Last 7 days</div>
@@ -321,7 +378,7 @@
                     <div>This year (Jan – Today)</div>
                 </div>
                 <div class="divider"></div>
-                <div class="compare-checkbox">Compare <input type="checkbox"></div>
+                <div class="compare-checkbox">Compare <input id="compareCheckbox" type="checkbox"></div>
                 <div class="compare-date-helper">
                     <div>Preceding period (match day of week)</div>
                     <div>Same period last year (match day of week)</div>
@@ -336,13 +393,13 @@
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">Start date</label>
-                                <input type="text" class="input-1" />
+                                <input type="text" class="input-1 start-date-input" />
                             </div>
                         </div>
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">End date</label>
-                                <input type="text" class="input-1" />
+                                <input type="text" class="input-1 end-date-input" />
                             </div>
                         </div>
                     </div>
@@ -350,13 +407,13 @@
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">Start date</label>
-                                <input type="text" class="input-1" />
+                                <input type="text" class="input-1 compare-start-date-input" />
                             </div>
                         </div>
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">End date</label>
-                                <input type="text" class="input-1" />
+                                <input type="text" class="input-1 compare-end-date-input" />
                             </div>
                         </div>
                     </div>
@@ -380,7 +437,7 @@
         <div class="footer">
             <div class="datepicker-actions">
                 <button>Cancel</button>
-                <button>Apply</button>
+                <button id="apply-dp">Apply</button>
             </div>
         </div>
     </div>
@@ -388,34 +445,176 @@
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script>
     $(function () {
-        function generateCalendar() {
-            const $calendarBody = $('.calendar-body');
-            const today = new Date();
-            const currentYear = today.getFullYear();
 
-            for (let month = 0; month < 12; month++) {
-                const date = new Date(currentYear, month, 1);
-                const monthName = date.toLocaleString('default', { month: 'short' });
-                const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+        const $calendarBody = $('.calendar-body');
+        $calendarBody.empty();
 
-                // Append month title
-                $calendarBody.append(`<div class="calendar-month">${monthName} ${currentYear}</div>`);
+        const today = new Date();
+        const currentYear = today.getFullYear();
 
-                // Create days grid
-                let daysGrid = '<div class="calendar-days">';
-                for (let i = 0; i < date.getDay(); i++) {
-                    daysGrid += '<div class="calendar-day empty"></div>'; // Empty spaces for alignment
+        let mainRange = { start: null, end: null }; // First range dates
+        let compareRange = { start: null, end: null }; // Second range dates
+        let isCompareEnabled = false;
+
+        let phaseStatus = 'main';
+
+        $calendarBody.on('click', '.calendar-day:not(.empty)', function () {
+            const selectedDate = new Date($(this).data('date'));
+
+            const customDateString = selectedDate.toLocaleDateString("en-US", {
+                month: "short", // Short month name
+                day: "2-digit", // Two-digit day
+                year: "numeric" // Four-digit year
+            });
+            console.log(customDateString);
+
+            if ( phaseStatus === 'main') {
+                if (!mainRange.start || (mainRange.start && mainRange.end)) {
+
+                    mainRange = { start: selectedDate, end: null };
+                    console.log(mainRange);
+                    $('.calendar-day').removeClass('range-blue-start range-blue-end range-blue');
+
+                    $(this).addClass('range-blue-start');
+
+                    $('.start-date-input').val(customDateString);
+
+                } else {
+                    mainRange.end = selectedDate;
+
+                    if (mainRange.start && mainRange.end < mainRange.start) {
+                        mainRange.start = null;
+                        return;
+                    }
+
+                    if ( isCompareEnabled ) {
+                        phaseStatus = 'compare';
+                    }
+
+                    $(this).addClass('range-blue-end');
+
+                    $('.end-date-input').val(customDateString);
+
+                    highlightRange();
                 }
 
-                for (let day = 1; day <= daysInMonth; day++) {
-                    daysGrid += `<div class="calendar-day"><span>${day}</span></div>`;
-                }
-                daysGrid += '</div>';
-                $calendarBody.append(daysGrid);
+                return;
             }
+
+            if (isCompareEnabled && phaseStatus === 'compare') {
+                // Second Range Selection
+                if (!compareRange.start || (compareRange.start && compareRange.end)) {
+
+                    compareRange = { start: selectedDate, end: null };
+
+                    $('.calendar-day').removeClass('range-orange-start range-orange-end range-orange range-green');
+
+                    $(this).addClass('range-orange-start');
+
+                    $('.compare-start-date-input').val(customDateString);
+
+                } else {
+                    compareRange.end = selectedDate;
+
+                    if (compareRange.end < compareRange.start) {
+                        [compareRange.start, compareRange.end] = [compareRange.end, compareRange.start];
+                        $('.compare-end-date-input').val(customDateString);
+                    }
+
+                    $(this).addClass('range-orange-end');
+
+                    phaseStatus = 'main';
+
+
+
+                    highlightRange();
+                }
+            }
+
+            console.log(phaseStatus)
+            console.log(mainRange)
+            console.log(compareRange)
+
+            if (mainRange.start && mainRange.end) {
+                // localStorage.setItem('mainRange', JSON.stringify(mainRange));
+            }
+
+            if (compareRange.start && compareRange.end) {
+                // localStorage.setItem('compareRange', JSON.stringify(compareRange));
+            }
+
+        });
+
+        // Compare Checkbox Listener
+        $('#compareCheckbox').on('change', function () {
+            isCompareEnabled = $(this).is(':checked');
+        });
+
+
+        generateCalendar(2024);
+
+        function generateCalendar(startYear) {
+            for (let year = startYear; year <= currentYear; year++) {
+                for (let month = 0; month < 12; month++) {
+                    if (year === currentYear && month > today.getMonth()) {
+                        break; // Stop if we've reached today's month
+                    }
+
+                    const date = new Date(year, month, 1);
+                    const monthName = date.toLocaleString('default', { month: 'short' });
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                    $calendarBody.append(`<div class="calendar-month">${monthName} ${year}</div>`);
+
+                    let daysGrid = '<div class="calendar-days">';
+                    for (let i = 0; i < date.getDay(); i++) {
+                        daysGrid += '<div class="calendar-day empty"></div>'; // Empty spaces for alignment
+                    }
+
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        daysGrid += `<div class="calendar-day" data-date="${year}-${month + 1}-${day}"><span>${day}</span></div>`;
+                    }
+                    daysGrid += '</div>';
+                    $calendarBody.append(daysGrid);
+                }
+            }
+
+            // Highlight restored ranges
+            if (mainRange.start && mainRange.end) highlightRange();
+            if (compareRange.start && compareRange.end) highlightRange();
         }
 
-        generateCalendar();
+        function resetCompareRange()
+        {
+            compareRange = { start: null, end: null };
+            // localStorage.setItem('compareRange', JSON.stringify(compareRange));
+        }
+        function resetMainRange()
+        {
+            mainRange = { start: null, end: null };
+            // localStorage.setItem('mainRange', JSON.stringify(mainRange));
+        }
+
+        function highlightRange() {
+            $('.calendar-day').each(function () {
+                const date = new Date($(this).data('date'));
+                const inMainRange = date >= mainRange.start && date <= mainRange.end;
+                const inCompareRange = date >= compareRange.start && date <= compareRange.end;
+
+                if (isCompareEnabled && inMainRange && inCompareRange) {
+                    $(this).addClass('range-green').removeClass('range-blue range-orange range-orange-start range-orange-end');
+                } else if (inMainRange) {
+                    // Only in the current range
+                    $(this).addClass('range-blue').removeClass('range-green range-orange');
+                } else if (isCompareEnabled && inCompareRange) {
+                    // Only in the current range
+                    $(this).addClass('range-orange').removeClass('range-green range-blue');
+                } else {
+                    // Remove styles if not in any range
+                    $(this).removeClass('range-blue range-orange range-green');
+                }
+            });
+        }
     });
 </script>
 </body>
