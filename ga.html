@@ -518,9 +518,9 @@
 
                     if (compareRange.end < compareRange.start) {
                         [compareRange.start, compareRange.end] = [compareRange.end, compareRange.start];
-                        $('.compare-end-date-input').val(customDateString);
-                    }
 
+                    }
+                    $('.compare-end-date-input').val(customDateString);
                     $(this).addClass('range-orange-end');
 
                     phaseStatus = 'main';
