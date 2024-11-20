@@ -326,10 +326,8 @@
             border-radius: 50%;
         }
 
-        .range-green-start span, .range-green-end span {
+        .range-blue-start.range-green span, .range-blue-end.range-green span {
             background-color: #46a35e;
-            color: white;
-            border-radius: 50%;
         }
 
         .range-orange-start {
@@ -462,30 +460,31 @@
             const selectedDate = new Date($(this).data('date'));
 
             const customDateString = selectedDate.toLocaleDateString("en-US", {
-                month: "short", // Short month name
-                day: "2-digit", // Two-digit day
-                year: "numeric" // Four-digit year
+                month: "short",
+                day: "2-digit",
+                year: "numeric"
             });
-            console.log(customDateString);
+
 
             if ( phaseStatus === 'main') {
+
+                if (mainRange.start && selectedDate < mainRange.start) {
+                    mainRange.start = null;
+                }
+
                 if (!mainRange.start || (mainRange.start && mainRange.end)) {
 
                     mainRange = { start: selectedDate, end: null };
-                    console.log(mainRange);
+
                     $('.calendar-day').removeClass('range-blue-start range-blue-end range-blue');
 
                     $(this).addClass('range-blue-start');
 
                     $('.start-date-input').val(customDateString);
 
+                    highlightRange();
                 } else {
                     mainRange.end = selectedDate;
-
-                    if (mainRange.start && mainRange.end < mainRange.start) {
-                        mainRange.start = null;
-                        return;
-                    }
 
                     if ( isCompareEnabled ) {
                         phaseStatus = 'compare';
@@ -502,7 +501,7 @@
             }
 
             if (isCompareEnabled && phaseStatus === 'compare') {
-                // Second Range Selection
+                // second range selection
                 if (!compareRange.start || (compareRange.start && compareRange.end)) {
 
                     compareRange = { start: selectedDate, end: null };
@@ -513,27 +512,52 @@
 
                     $('.compare-start-date-input').val(customDateString);
 
-                } else {
-                    compareRange.end = selectedDate;
-
-                    if (compareRange.end < compareRange.start) {
-                        [compareRange.start, compareRange.end] = [compareRange.end, compareRange.start];
-
-                    }
-                    $('.compare-end-date-input').val(customDateString);
-                    $(this).addClass('range-orange-end');
-
-                    phaseStatus = 'main';
-
-
-
                     highlightRange();
+                } else {
+                    if (selectedDate > compareRange.start) {
+
+                        compareRange.end = selectedDate;
+
+                        $(this).addClass('range-orange-end');
+                        $('.compare-end-date-input').val(customDateString);
+
+                        phaseStatus = 'main';
+
+                        highlightRange();
+
+                        return;
+                    } else {
+                        $('.range-orange-start').addClass('range-orange-end').removeClass('range-orange-start');
+                        $(this).addClass('range-orange-start').removeClass('range-orange-end');
+
+                        compareRange = { start: compareRange.end, end: selectedDate };
+
+                        highlightRange();
+
+                        phaseStatus = 'main';
+
+                        return;
+                    }
+
+
+                    if (!compareRange.end) {
+                        compareRange.end = selectedDate;
+                        $('.compare-end-date-input').val(customDateString);
+                        $(this).addClass('range-orange-end');
+
+                    } else if (selectedDate < compareRange.start) {
+
+                        $(this).addClass('range-orange-start');
+
+                        compareRange.start = selectedDate;
+                        $('.compare-start-date-input').val(customDateString);
+                        $(this).addClass('range-orange-start');
+                        phaseStatus = 'compare';
+                    }
+
+
                 }
             }
-
-            console.log(phaseStatus)
-            console.log(mainRange)
-            console.log(compareRange)
 
             if (mainRange.start && mainRange.end) {
                 // localStorage.setItem('mainRange', JSON.stringify(mainRange));
@@ -597,9 +621,21 @@
 
         function highlightRange() {
             $('.calendar-day').each(function () {
-                const date = new Date($(this).data('date'));
-                const inMainRange = date >= mainRange.start && date <= mainRange.end;
-                const inCompareRange = date >= compareRange.start && date <= compareRange.end;
+                let dataDate = $(this).data('date');
+
+                if (!dataDate) {
+                    return;
+                }
+
+                const date = new Date(dataDate);
+
+                const mainStartTime = date.getTime() === mainRange.start?.getTime();
+                const mainEndTime = date.getTime() === mainRange.end?.getTime();
+                const compareStartTime = date.getTime() === compareRange.start?.getTime();
+                const compareEndTime = date.getTime() === compareRange.end?.getTime();
+
+                const inMainRange = mainStartTime || mainEndTime || (date >= mainRange.start && date <= mainRange.end);
+                const inCompareRange = compareStartTime || compareEndTime || (date >= compareRange.start && date <= compareRange.end);
 
                 if (isCompareEnabled && inMainRange && inCompareRange) {
                     $(this).addClass('range-green').removeClass('range-blue range-orange range-orange-start range-orange-end');
@@ -613,6 +649,8 @@
                     // Remove styles if not in any range
                     $(this).removeClass('range-blue range-orange range-green');
                 }
+
+
             });
         }
     });
