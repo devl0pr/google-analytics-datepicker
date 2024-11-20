@@ -465,7 +465,6 @@
                 year: "numeric"
             });
 
-
             if ( phaseStatus === 'main') {
 
                 if (mainRange.start && selectedDate < mainRange.start) {
@@ -530,7 +529,13 @@
                         $('.range-orange-start').addClass('range-orange-end').removeClass('range-orange-start');
                         $(this).addClass('range-orange-start').removeClass('range-orange-end');
 
-                        compareRange = { start: compareRange.end, end: selectedDate };
+
+                        $('.compare-end-date-input').val($('.compare-start-date-input').val());
+                        $('.compare-start-date-input').val(customDateString);
+
+                        compareRange = { start: selectedDate, end: compareRange.start };
+
+                        console.log(compareRange)
 
                         highlightRange();
 
@@ -606,17 +611,6 @@
             // Highlight restored ranges
             if (mainRange.start && mainRange.end) highlightRange();
             if (compareRange.start && compareRange.end) highlightRange();
-        }
-
-        function resetCompareRange()
-        {
-            compareRange = { start: null, end: null };
-            // localStorage.setItem('compareRange', JSON.stringify(compareRange));
-        }
-        function resetMainRange()
-        {
-            mainRange = { start: null, end: null };
-            // localStorage.setItem('mainRange', JSON.stringify(mainRange));
         }
 
         function highlightRange() {
