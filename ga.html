@@ -442,6 +442,9 @@
 <script>
     $(function () {
 
+        let mainPreset = null;
+        let comparePreset = null;
+
         const calendarBody = $('.calendar-body');
         calendarBody.empty();
 
@@ -474,7 +477,9 @@
 
                     mainRange = { start: selectedDate, end: null };
 
-                    $('.start-date-input').val(customDateString);
+                    fillInputs();
+
+                    highlightRange();
 
                 } else {
                     mainRange.end = selectedDate;
@@ -485,6 +490,11 @@
 
                     $('.end-date-input').val(customDateString);
 
+                    fillInputs();
+
+                    highlightRange();
+
+                    return;
                 }
 
             }
@@ -496,6 +506,10 @@
 
                     $('.compare-start-date-input').val(customDateString);
 
+                    fillInputs();
+
+                    highlightRange();
+
                 } else {
                     if (selectedDate > compareRange.start) {
 
@@ -504,6 +518,10 @@
                         $('.compare-end-date-input').val(customDateString);
 
                         phaseStatus = 'main';
+
+                        fillInputs();
+
+                        highlightRange();
 
                     } else {
                         const compareStartDateInput = $('.compare-start-date-input');
@@ -514,129 +532,137 @@
                         compareRange = { start: selectedDate, end: compareRange.start };
 
                         phaseStatus = 'main';
+
+                        fillInputs();
+
+                        highlightRange();
+
                     }
                 }
             }
-
-            highlightRange();
-
-            if (mainRange.start && mainRange.end) {
-                // localStorage.setItem('mainRange', JSON.stringify(mainRange));
-            }
-
-            if (compareRange.start && compareRange.end) {
-                // localStorage.setItem('compareRange', JSON.stringify(compareRange));
-            }
-
         });
+
+        $('#apply-dp').click(function (e) {
+            e.preventDefault();
+
+            localStorage.setItem('mainRange', JSON.stringify(mainRange));
+            localStorage.setItem('compareRange', JSON.stringify(compareRange));
+            localStorage.setItem('compare', $('#compareCheckbox').is(':checked'));
+            localStorage.setItem('mainPreset', mainPreset);
+            localStorage.setItem('compare-preset', comparePreset);
+        });
+
 
         // Compare Checkbox Listener
         $('#compareCheckbox').on('change', function () {
             isCompareEnabled = $(this).is(':checked');
+            highlightRange();
         });
 
         // Date range calculations
         const dateRanges = {
             "this-week": () => {
                 const now = new Date();
-                const start = new Date(now.setDate(now.getDate() - now.getDay()));
+                now.setHours(0, 0, 0, 0);
+                const start = new Date(now);
+                start.setDate(now.getDate() - now.getDay());
                 const end = new Date(start);
                 end.setDate(start.getDate() + 6);
-
-                start.setHours(0, 0, 0, 0);
-                end.setHours(0, 0, 0, 0);
-
                 return { start, end };
             },
             "last-week": () => {
                 const now = new Date();
-                const start = new Date(now.setDate(now.getDate() - now.getDay() - 7));
+                now.setHours(0, 0, 0, 0);
+                const start = new Date(now);
+                start.setDate(now.getDate() - now.getDay() - 7);
                 const end = new Date(start);
                 end.setDate(start.getDate() + 6);
-
-                start.setHours(0, 0, 0, 0);
-                end.setHours(0, 0, 0, 0);
-
                 return { start, end };
             },
             "last-7-days": () => {
                 const now = new Date();
+                now.setHours(0, 0, 0, 0);
+
                 const start = new Date(now);
                 start.setDate(now.getDate() - 7);
 
-                start.setHours(0, 0, 0, 0);
-                now.setHours(0, 0, 0, 0);
+                now.setDate(now.getDate() - 1);
+                const end = new Date(now);
 
-                return { start, end: now };
+                return { start, end };
             },
             "last-28-days": () => {
                 const now = new Date();
+                now.setHours(0, 0, 0, 0);
+
+                const end = new Date(now);
+                end.setDate(now.getDate() - 1);
+
                 const start = new Date(now);
                 start.setDate(now.getDate() - 28);
 
-                start.setHours(0, 0, 0, 0);
-                now.setHours(0, 0, 0, 0);
-
-                return { start, end: now };
+                return { start, end };
             },
             "last-30-days": () => {
                 const now = new Date();
+                now.setHours(0, 0, 0, 0);
+
                 const start = new Date(now);
                 start.setDate(now.getDate() - 30);
 
-                start.setHours(0, 0, 0, 0);
-                now.setHours(0, 0, 0, 0);
+                const end = new Date(now);
+                end.setDate(now.getDate() - 1);
 
-                return { start, end: now };
+                return { start, end };
             },
             "last-90-days": () => {
                 const now = new Date();
+                now.setHours(0, 0, 0, 0);
+
                 const start = new Date(now);
                 start.setDate(now.getDate() - 90);
 
-                start.setHours(0, 0, 0, 0);
-                now.setHours(0, 0, 0, 0);
+                const end = new Date(now);
+                end.setDate(now.getDate() - 1);
 
-                return { start, end: now };
+                return { start, end };
             },
             "last-12-months": () => {
                 const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                now.setDate(now.getDate() - 1);
+
+                const end = new Date(now);
                 const start = new Date(now);
+
                 start.setFullYear(now.getFullYear() - 1);
 
-                start.setHours(0, 0, 0, 0);
-                now.setHours(0, 0, 0, 0);
-
-                return { start, end: now };
+                return { start, end };
             },
             "last-calendar-year": () => {
                 const now = new Date();
                 const start = new Date(now.getFullYear() - 1, 0, 1);
                 const end = new Date(now.getFullYear() - 1, 11, 31);
-
                 start.setHours(0, 0, 0, 0);
                 end.setHours(0, 0, 0, 0);
-
                 return { start, end };
             },
             "this-year": () => {
                 const now = new Date();
                 const start = new Date(now.getFullYear(), 0, 1);
-
                 start.setHours(0, 0, 0, 0);
                 now.setHours(0, 0, 0, 0);
-
                 return { start, end: now };
             }
         };
 
         const compareLogic = {
             "preceding-period-match": () => {
-                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1; // Days in main range
-                const end = new Date(mainRange.start);
-                end.setDate(mainRange.start.getDate() - 1); // End is the day before main range start
-                const start = new Date(end);
-                start.setDate(end.getDate() - diff + 1); // Calculate start of preceding range
+                const start = new Date(mainRange.start);
+                const end = new Date(mainRange.end);
+                const length = (end - start) / (1000 * 60 * 60 * 24) + 1;
+                start.setDate(start.getDate() - length);
+                end.setDate(end.getDate() - length);
                 start.setHours(0, 0, 0, 0);
                 end.setHours(0, 0, 0, 0);
                 return { start, end };
@@ -651,18 +677,18 @@
                 return { start, end };
             },
             "preceding-period": () => {
-                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1; // Days in main range
+                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1;
                 const end = new Date(mainRange.start);
-                end.setDate(mainRange.start.getDate() - 1); // End is the day before main range start
+                end.setDate(mainRange.start.getDate() - 1);
                 const start = new Date(end);
-                start.setDate(end.getDate() - diff + 1); // Calculate start of preceding range
+                start.setDate(end.getDate() - diff + 1);
                 start.setHours(0, 0, 0, 0);
                 end.setHours(0, 0, 0, 0);
                 return { start, end };
             },
             "same-period-last-year": () => {
-                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1; // Days in main range
-                const end = new Date(mainRange.start);
+                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1;
+                const end = new Date(mainRange.end);
                 end.setFullYear(end.getFullYear() - 1);
                 const start = new Date(end);
                 start.setDate(end.getDate() - diff + 1);
@@ -679,16 +705,21 @@
             if (type === 'main') {
                 if (dateRanges[rangeType]) {
                     mainRange = dateRanges[rangeType]();
+                    mainPreset = rangeType;
+
                     console.log(`Main Range:`, mainRange);
                 }
 
             } else if (type === 'compare') {
                 if (compareLogic[rangeType]) {
                     compareRange = compareLogic[rangeType]();
+                    comparePreset = rangeType;
+
                     console.log(`Compare Range for ${rangeType}:`, compareRange);
                 }
             }
 
+            fillInputs();
             highlightRange();
         });
 
@@ -748,8 +779,8 @@
                 const inMainRange = date >= mainRange.start && date <= mainRange.end;
                 const inCompareRange = date >= compareRange.start && date <= compareRange.end;
 
-                const mainStartIntersectWithCompare = inCompareRange && mainRange.start?.getTime() === date.getTime();
-                const mainEndIntersectWithCompare = inCompareRange && mainRange.end?.getTime() === date.getTime();
+                const mainStartIntersectWithCompare = isCompareEnabled && inCompareRange && mainRange.start?.getTime() === date.getTime();
+                const mainEndIntersectWithCompare = isCompareEnabled && inCompareRange && mainRange.end?.getTime() === date.getTime();
 
                 if ((mainStartTime && compareStartTime && isCompareEnabled) || mainStartIntersectWithCompare) {
                     $(this).addClass('range-blue range-green range-start');
@@ -763,10 +794,10 @@
                 else if (mainEndTime) {
                     $(this).addClass('range-blue range-end');
                 }
-                else if (inMainRange && compareStartTime) {
+                else if (inMainRange && compareStartTime && isCompareEnabled) {
                     $(this).addClass('range-green');
                 }
-                else if (inMainRange && inCompareRange) {
+                else if (inMainRange && inCompareRange && isCompareEnabled) {
                     $(this).addClass('range-green');
                 }
                 else if (compareStartTime && isCompareEnabled) {
@@ -782,6 +813,60 @@
                     $(this).addClass('range-orange');
                 }
             });
+        }
+
+        function fillInputs()
+        {
+            let customDateString = '';
+            let startDateInput = $('.start-date-input').val(customDateString);
+            let endDateInput = $('.end-date-input').val(customDateString);
+            let compareStartDateInput = $('.compare-start-date-input').val(customDateString);
+            let compareEndDateInput = $('.compare-end-date-input').val(customDateString);
+
+            startDateInput.val('');
+            endDateInput.val('');
+            compareStartDateInput.val('');
+            compareEndDateInput.val('');
+
+            if (mainRange.start) {
+                customDateString = mainRange.start.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric"
+                });
+
+                startDateInput.val(customDateString);
+            }
+
+            if (mainRange.end) {
+                customDateString = mainRange.end.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric"
+                });
+
+                endDateInput.val(customDateString);
+            }
+
+            if (compareRange.start) {
+                customDateString = compareRange.start.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric"
+                });
+
+                compareStartDateInput.val(customDateString);
+            }
+
+            if (compareRange.end) {
+                customDateString = compareRange.end.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric"
+                });
+
+                compareEndDateInput.val(customDateString);
+            }
         }
     });
 </script>
