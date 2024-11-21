@@ -169,6 +169,7 @@
             position: relative;
             margin: 10px 0;
         }
+
         .input-box .input-label {
             position: absolute;
             color: #80868b;
@@ -185,6 +186,7 @@
             user-select: none;
             pointer-events: none;
         }
+
         .input-box .input-label svg {
             position: relative;
             width: 15px;
@@ -192,6 +194,7 @@
             top: 2px;
             transition: 250ms;
         }
+
         .input-box .input-1 {
             box-sizing: border-box;
             height: 40px;
@@ -202,6 +205,7 @@
             transition: 250ms;
             font-size: .87rem;
         }
+
         .input-box .input-1:focus {
             outline: none;
             border: 2px solid #1a73e8;
@@ -215,6 +219,7 @@
             font-size: 11px;
             transition: 250ms;
         }
+
         .input-box.error .input-1 {
             border: 2px solid #f44336;
         }
@@ -227,6 +232,7 @@
             font-size: 11px;
             transition: 250ms;
         }
+
         .input-box.focus .input-label svg,
         .input-box.active .input-label svg {
             position: relative;
@@ -308,46 +314,38 @@
             background-color: #a8dab5;
         }
 
-        .range-blue-start
+        .range-start
         {
             border-bottom-left-radius: 15px;
             border-top-left-radius: 15px;
         }
 
-        .range-blue-end
+        .range-end
         {
             border-bottom-right-radius: 15px;
             border-top-right-radius: 15px;
         }
 
-        .range-blue-start span, .range-blue-end span {
+        .range-blue.range-start span, .range-blue.range-end span {
             background-color: #1a73e8;
             color: white;
             border-radius: 50%;
         }
 
-        .range-blue-start.range-green span, .range-blue-end.range-green span {
+        .range-blue.range-green span, .range-blue.range-green span {
             background-color: #46a35e;
         }
 
-        .range-orange-start {
+        .range-orange.range-start {
             border-bottom-left-radius: 15px;
             border-top-left-radius: 15px;
             background-color: #f9ab0033
         }
 
-        .range-orange-end {
+        .range-orange.range-end {
             border-bottom-right-radius: 15px;
             border-top-right-radius: 15px;
             background-color: #f9ab0033
-        }
-
-        .range-orange-start span {
-            /*background-color: #f9ab0033;*/
-        }
-
-        .range-orange-end span {
-            /*background-color: #f9ab0033;*/
         }
 
         .range-orange {
@@ -364,25 +362,25 @@
         <div class="datepicker-body">
             <div class="datepicker-helper">
                 <div class="main-date-helper">
-                    <div class="active">Custom</div>
-                    <div>This week</div>
-                    <div>Last week</div>
-                    <div>Last 7 days</div>
-                    <div>Last 28 days</div>
-                    <div>Last 30 days</div>
-                    <div>Last 90 days</div>
-                    <div>Last 12 months</div>
-                    <div>Last calendar year</div>
-                    <div>This year (Jan – Today)</div>
+                    <div data-type="main" data-range="custom">Custom</div>
+                    <div data-type="main" data-range="this-week">This week</div>
+                    <div data-type="main" data-range="last-week">Last week</div>
+                    <div data-type="main" data-range="last-7-days">Last 7 days</div>
+                    <div data-type="main" data-range="last-28-days">Last 28 days</div>
+                    <div data-type="main" data-range="last-30-days">Last 30 days</div>
+                    <div data-type="main" data-range="last-90-days">Last 90 days</div>
+                    <div data-type="main" data-range="last-12-months">Last 12 months</div>
+                    <div data-type="main" data-range="last-calendar-year">Last calendar year</div>
+                    <div data-type="main" data-range="this-year">This year (Jan – Today)</div>
                 </div>
                 <div class="divider"></div>
                 <div class="compare-checkbox">Compare <input id="compareCheckbox" type="checkbox"></div>
                 <div class="compare-date-helper">
-                    <div>Preceding period (match day of week)</div>
-                    <div>Same period last year (match day of week)</div>
-                    <div>Preceding period</div>
-                    <div>Same period last year</div>
-                    <div>Custom</div>
+                    <div data-type="compare" data-range="preceding-period-match">Preceding period (match day of week)</div>
+                    <div data-type="compare" data-range="same-period-last-year-match">Same period last year (match day of week)</div>
+                    <div data-type="compare" data-range="preceding-period">Preceding period</div>
+                    <div data-type="compare" data-range="same-period-last-year">Same period last year</div>
+                    <div data-type="compare" data-range="custom">Custom</div>
                 </div>
             </div>
             <div class="datepicker-dates">
@@ -444,20 +442,21 @@
 <script>
     $(function () {
 
-        const $calendarBody = $('.calendar-body');
-        $calendarBody.empty();
+        const calendarBody = $('.calendar-body');
+        calendarBody.empty();
 
         const today = new Date();
         const currentYear = today.getFullYear();
 
-        let mainRange = { start: null, end: null }; // First range dates
-        let compareRange = { start: null, end: null }; // Second range dates
+        let mainRange = { start: null, end: null };
+        let compareRange = { start: null, end: null };
         let isCompareEnabled = false;
 
         let phaseStatus = 'main';
 
-        $calendarBody.on('click', '.calendar-day:not(.empty)', function () {
+        calendarBody.on('click', '.calendar-day:not(.empty)', function () {
             const selectedDate = new Date($(this).data('date'));
+            selectedDate.setHours(0, 0, 0, 0);
 
             const customDateString = selectedDate.toLocaleDateString("en-US", {
                 month: "short",
@@ -465,7 +464,7 @@
                 year: "numeric"
             });
 
-            if ( phaseStatus === 'main') {
+            if (phaseStatus === 'main') {
 
                 if (mainRange.start && selectedDate < mainRange.start) {
                     mainRange.start = null;
@@ -475,94 +474,51 @@
 
                     mainRange = { start: selectedDate, end: null };
 
-                    $('.calendar-day').removeClass('range-blue-start range-blue-end range-blue');
-
-                    $(this).addClass('range-blue-start');
-
                     $('.start-date-input').val(customDateString);
 
-                    highlightRange();
                 } else {
                     mainRange.end = selectedDate;
 
-                    if ( isCompareEnabled ) {
+                    if (isCompareEnabled) {
                         phaseStatus = 'compare';
                     }
 
-                    $(this).addClass('range-blue-end');
-
                     $('.end-date-input').val(customDateString);
 
-                    highlightRange();
                 }
 
-                return;
             }
 
             if (isCompareEnabled && phaseStatus === 'compare') {
-                // second range selection
                 if (!compareRange.start || (compareRange.start && compareRange.end)) {
 
                     compareRange = { start: selectedDate, end: null };
 
-                    $('.calendar-day').removeClass('range-orange-start range-orange-end range-orange range-green');
-
-                    $(this).addClass('range-orange-start');
-
                     $('.compare-start-date-input').val(customDateString);
 
-                    highlightRange();
                 } else {
                     if (selectedDate > compareRange.start) {
 
                         compareRange.end = selectedDate;
 
-                        $(this).addClass('range-orange-end');
                         $('.compare-end-date-input').val(customDateString);
 
                         phaseStatus = 'main';
 
-                        highlightRange();
-
-                        return;
                     } else {
-                        $('.range-orange-start').addClass('range-orange-end').removeClass('range-orange-start');
-                        $(this).addClass('range-orange-start').removeClass('range-orange-end');
+                        const compareStartDateInput = $('.compare-start-date-input');
 
-
-                        $('.compare-end-date-input').val($('.compare-start-date-input').val());
-                        $('.compare-start-date-input').val(customDateString);
+                        $('.compare-end-date-input').val(compareStartDateInput.val());
+                        compareStartDateInput.val(customDateString);
 
                         compareRange = { start: selectedDate, end: compareRange.start };
 
-                        console.log(compareRange)
-
-                        highlightRange();
-
                         phaseStatus = 'main';
-
-                        return;
                     }
-
-
-                    if (!compareRange.end) {
-                        compareRange.end = selectedDate;
-                        $('.compare-end-date-input').val(customDateString);
-                        $(this).addClass('range-orange-end');
-
-                    } else if (selectedDate < compareRange.start) {
-
-                        $(this).addClass('range-orange-start');
-
-                        compareRange.start = selectedDate;
-                        $('.compare-start-date-input').val(customDateString);
-                        $(this).addClass('range-orange-start');
-                        phaseStatus = 'compare';
-                    }
-
-
                 }
             }
+
+            highlightRange();
 
             if (mainRange.start && mainRange.end) {
                 // localStorage.setItem('mainRange', JSON.stringify(mainRange));
@@ -579,6 +535,162 @@
             isCompareEnabled = $(this).is(':checked');
         });
 
+        // Date range calculations
+        const dateRanges = {
+            "this-week": () => {
+                const now = new Date();
+                const start = new Date(now.setDate(now.getDate() - now.getDay()));
+                const end = new Date(start);
+                end.setDate(start.getDate() + 6);
+
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+
+                return { start, end };
+            },
+            "last-week": () => {
+                const now = new Date();
+                const start = new Date(now.setDate(now.getDate() - now.getDay() - 7));
+                const end = new Date(start);
+                end.setDate(start.getDate() + 6);
+
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+
+                return { start, end };
+            },
+            "last-7-days": () => {
+                const now = new Date();
+                const start = new Date(now);
+                start.setDate(now.getDate() - 7);
+
+                start.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+
+                return { start, end: now };
+            },
+            "last-28-days": () => {
+                const now = new Date();
+                const start = new Date(now);
+                start.setDate(now.getDate() - 28);
+
+                start.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+
+                return { start, end: now };
+            },
+            "last-30-days": () => {
+                const now = new Date();
+                const start = new Date(now);
+                start.setDate(now.getDate() - 30);
+
+                start.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+
+                return { start, end: now };
+            },
+            "last-90-days": () => {
+                const now = new Date();
+                const start = new Date(now);
+                start.setDate(now.getDate() - 90);
+
+                start.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+
+                return { start, end: now };
+            },
+            "last-12-months": () => {
+                const now = new Date();
+                const start = new Date(now);
+                start.setFullYear(now.getFullYear() - 1);
+
+                start.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+
+                return { start, end: now };
+            },
+            "last-calendar-year": () => {
+                const now = new Date();
+                const start = new Date(now.getFullYear() - 1, 0, 1);
+                const end = new Date(now.getFullYear() - 1, 11, 31);
+
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+
+                return { start, end };
+            },
+            "this-year": () => {
+                const now = new Date();
+                const start = new Date(now.getFullYear(), 0, 1);
+
+                start.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+
+                return { start, end: now };
+            }
+        };
+
+        const compareLogic = {
+            "preceding-period-match": () => {
+                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1; // Days in main range
+                const end = new Date(mainRange.start);
+                end.setDate(mainRange.start.getDate() - 1); // End is the day before main range start
+                const start = new Date(end);
+                start.setDate(end.getDate() - diff + 1); // Calculate start of preceding range
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return { start, end };
+            },
+            "same-period-last-year-match": () => {
+                const start = new Date(mainRange.start);
+                const end = new Date(mainRange.end);
+                start.setFullYear(start.getFullYear() - 1);
+                end.setFullYear(end.getFullYear() - 1);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return { start, end };
+            },
+            "preceding-period": () => {
+                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1; // Days in main range
+                const end = new Date(mainRange.start);
+                end.setDate(mainRange.start.getDate() - 1); // End is the day before main range start
+                const start = new Date(end);
+                start.setDate(end.getDate() - diff + 1); // Calculate start of preceding range
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return { start, end };
+            },
+            "same-period-last-year": () => {
+                const diff = (mainRange.end - mainRange.start) / (1000 * 60 * 60 * 24) + 1; // Days in main range
+                const end = new Date(mainRange.start);
+                end.setFullYear(end.getFullYear() - 1);
+                const start = new Date(end);
+                start.setDate(end.getDate() - diff + 1);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return { start, end };
+            }
+        };
+
+        $(document).on('click', '[data-range]', function () {
+            const rangeType = $(this).data('range');
+            const type = $(this).data('type'); // main or compare
+
+            if (type === 'main') {
+                if (dateRanges[rangeType]) {
+                    mainRange = dateRanges[rangeType]();
+                    console.log(`Main Range:`, mainRange);
+                }
+
+            } else if (type === 'compare') {
+                if (compareLogic[rangeType]) {
+                    compareRange = compareLogic[rangeType]();
+                    console.log(`Compare Range for ${rangeType}:`, compareRange);
+                }
+            }
+
+            highlightRange();
+        });
 
         generateCalendar(2022);
 
@@ -593,7 +705,7 @@
                     const monthName = date.toLocaleString('default', { month: 'short' });
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-                    $calendarBody.append(`<div class="calendar-month">${monthName} ${year}</div>`);
+                    calendarBody.append(`<div class="calendar-month">${monthName} ${year}</div>`);
 
                     let daysGrid = '<div class="calendar-days">';
                     for (let i = 0; i < date.getDay(); i++) {
@@ -604,7 +716,7 @@
                         daysGrid += `<div class="calendar-day" data-date="${year}-${month + 1}-${day}"><span>${day}</span></div>`;
                     }
                     daysGrid += '</div>';
-                    $calendarBody.append(daysGrid);
+                    calendarBody.append(daysGrid);
                 }
             }
 
@@ -614,7 +726,11 @@
         }
 
         function highlightRange() {
+
             $('.calendar-day').each(function () {
+
+                $(this).removeClass('range-green range-orange range-blue range-start range-end');
+
                 let dataDate = $(this).data('date');
 
                 if (!dataDate) {
@@ -622,29 +738,49 @@
                 }
 
                 const date = new Date(dataDate);
+                date.setHours(0, 0, 0, 0);
 
                 const mainStartTime = date.getTime() === mainRange.start?.getTime();
                 const mainEndTime = date.getTime() === mainRange.end?.getTime();
                 const compareStartTime = date.getTime() === compareRange.start?.getTime();
                 const compareEndTime = date.getTime() === compareRange.end?.getTime();
 
-                const inMainRange = mainStartTime || mainEndTime || (date >= mainRange.start && date <= mainRange.end);
-                const inCompareRange = compareStartTime || compareEndTime || (date >= compareRange.start && date <= compareRange.end);
+                const inMainRange = date >= mainRange.start && date <= mainRange.end;
+                const inCompareRange = date >= compareRange.start && date <= compareRange.end;
 
-                if (isCompareEnabled && inMainRange && inCompareRange) {
-                    $(this).addClass('range-green').removeClass('range-blue range-orange range-orange-start range-orange-end');
-                } else if (inMainRange) {
-                    // Only in the current range
-                    $(this).addClass('range-blue').removeClass('range-green range-orange');
-                } else if (isCompareEnabled && inCompareRange) {
-                    // Only in the current range
-                    $(this).addClass('range-orange').removeClass('range-green range-blue');
-                } else {
-                    // Remove styles if not in any range
-                    $(this).removeClass('range-blue range-orange range-green');
+                const mainStartIntersectWithCompare = inCompareRange && mainRange.start?.getTime() === date.getTime();
+                const mainEndIntersectWithCompare = inCompareRange && mainRange.end?.getTime() === date.getTime();
+
+                if ((mainStartTime && compareStartTime && isCompareEnabled) || mainStartIntersectWithCompare) {
+                    $(this).addClass('range-blue range-green range-start');
                 }
-
-
+                if ((mainEndTime && compareEndTime && isCompareEnabled) || mainEndIntersectWithCompare) {
+                    $(this).addClass('range-blue range-green range-end');
+                }
+                else if (mainStartTime) {
+                    $(this).addClass('range-blue range-start');
+                }
+                else if (mainEndTime) {
+                    $(this).addClass('range-blue range-end');
+                }
+                else if (inMainRange && compareStartTime) {
+                    $(this).addClass('range-green');
+                }
+                else if (inMainRange && inCompareRange) {
+                    $(this).addClass('range-green');
+                }
+                else if (compareStartTime && isCompareEnabled) {
+                    $(this).addClass('range-orange range-start');
+                }
+                else if (compareEndTime && isCompareEnabled) {
+                    $(this).addClass('range-orange range-end');
+                }
+                else if (inMainRange) {
+                    $(this).addClass('range-blue');
+                }
+                else if (isCompareEnabled && inCompareRange) {
+                    $(this).addClass('range-orange');
+                }
             });
         }
     });
