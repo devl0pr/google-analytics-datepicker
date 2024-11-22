@@ -560,6 +560,7 @@
             localStorage.setItem('compare', $('#compareCheckbox').is(':checked'));
             localStorage.setItem('mainPreset', mainPreset);
             localStorage.setItem('compare-preset', comparePreset);
+            localStorage.setItem('phaseStatus', phaseStatus);
         });
 
 
@@ -951,6 +952,11 @@
             if (storedComparePreset) {
                 comparePreset = storedComparePreset;
                 $('[data-range="' + comparePreset + '"]').addClass('active');
+            }
+
+            const storedPhaseStatus = localStorage.getItem('phaseStatus');
+            if (storedPhaseStatus) {
+                phaseStatus = storedPhaseStatus;
             }
 
             // Example: Apply the state to a checkbox (if you have one in your UI)
