@@ -78,10 +78,12 @@
         .datepicker-dates {
             width: 50%;
             padding-top: 10px;
+            display: flex;
+            flex-direction: column;
         }
 
         .datepicker-inputs {
-            height: 30%;
+            /*height: 30%;*/
         }
 
         .datepicker-date-inputs {
@@ -249,7 +251,6 @@
         .calendar-container {
             border: 1px solid #ddd;
             border-top: 0;
-            height: 70%;
             overflow-y: scroll;
         }
 
@@ -362,25 +363,25 @@
         <div class="datepicker-body">
             <div class="datepicker-helper">
                 <div class="main-date-helper">
-                    <div data-type="main" data-range="custom">Custom</div>
-                    <div data-type="main" data-range="this-week">This week</div>
-                    <div data-type="main" data-range="last-week">Last week</div>
-                    <div data-type="main" data-range="last-7-days">Last 7 days</div>
-                    <div data-type="main" data-range="last-28-days">Last 28 days</div>
-                    <div data-type="main" data-range="last-30-days">Last 30 days</div>
-                    <div data-type="main" data-range="last-90-days">Last 90 days</div>
-                    <div data-type="main" data-range="last-12-months">Last 12 months</div>
-                    <div data-type="main" data-range="last-calendar-year">Last calendar year</div>
-                    <div data-type="main" data-range="this-year">This year (Jan – Today)</div>
+                    <div class="main-preset" data-type="main" data-range="custom">Custom</div>
+                    <div class="main-preset" data-type="main" data-range="this-week">This week</div>
+                    <div class="main-preset" data-type="main" data-range="last-week">Last week</div>
+                    <div class="main-preset" data-type="main" data-range="last-7-days">Last 7 days</div>
+                    <div class="main-preset" data-type="main" data-range="last-28-days">Last 28 days</div>
+                    <div class="main-preset" data-type="main" data-range="last-30-days">Last 30 days</div>
+                    <div class="main-preset" data-type="main" data-range="last-90-days">Last 90 days</div>
+                    <div class="main-preset" data-type="main" data-range="last-12-months">Last 12 months</div>
+                    <div class="main-preset" data-type="main" data-range="last-calendar-year">Last calendar year</div>
+                    <div class="main-preset" data-type="main" data-range="this-year">This year (Jan – Today)</div>
                 </div>
                 <div class="divider"></div>
                 <div class="compare-checkbox">Compare <input id="compareCheckbox" type="checkbox"></div>
-                <div class="compare-date-helper">
-                    <div data-type="compare" data-range="preceding-period-match">Preceding period (match day of week)</div>
-                    <div data-type="compare" data-range="same-period-last-year-match">Same period last year (match day of week)</div>
-                    <div data-type="compare" data-range="preceding-period">Preceding period</div>
-                    <div data-type="compare" data-range="same-period-last-year">Same period last year</div>
-                    <div data-type="compare" data-range="custom">Custom</div>
+                <div class="compare-date-helper" style="display: none">
+                    <div class="compare-preset" data-type="compare" data-range="preceding-period-match">Preceding period (match day of week)</div>
+                    <div class="compare-preset" data-type="compare" data-range="same-period-last-year-match">Same period last year (match day of week)</div>
+                    <div class="compare-preset" data-type="compare" data-range="preceding-period">Preceding period</div>
+                    <div class="compare-preset" data-type="compare" data-range="same-period-last-year">Same period last year</div>
+                    <div class="compare-preset" data-type="compare" data-range="custom">Custom</div>
                 </div>
             </div>
             <div class="datepicker-dates">
@@ -399,7 +400,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="datepicker-date-inputs datepicker-compare-inputs">
+                    <div class="datepicker-date-inputs datepicker-compare-inputs" style="display: none">
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">Start date</label>
@@ -469,6 +470,10 @@
 
             if (phaseStatus === 'main') {
 
+                $('.main-preset').removeClass('active');
+                $('.main-preset[data-range="custom"]').addClass('active');
+                mainPreset = 'custom';
+
                 if (mainRange.start && selectedDate < mainRange.start) {
                     mainRange.start = null;
                 }
@@ -500,6 +505,11 @@
             }
 
             if (isCompareEnabled && phaseStatus === 'compare') {
+
+                $('.compare-preset').removeClass('active');
+                $('.compare-preset[data-range="custom"]').addClass('active');
+                comparePreset = 'custom';
+
                 if (!compareRange.start || (compareRange.start && compareRange.end)) {
 
                     compareRange = { start: selectedDate, end: null };
@@ -556,7 +566,15 @@
         // Compare Checkbox Listener
         $('#compareCheckbox').on('change', function () {
             isCompareEnabled = $(this).is(':checked');
-            highlightRange();
+
+            if (isCompareEnabled) {
+                $('.datepicker-compare-inputs').show();
+                $('.compare-date-helper').show();
+            } else {
+                $('.datepicker-compare-inputs').hide();
+                $('.compare-date-helper').hide();
+            }
+            // highlightRange();
         });
 
         // Date range calculations
@@ -658,13 +676,22 @@
 
         const compareLogic = {
             "preceding-period-match": () => {
-                const start = new Date(mainRange.start);
-                const end = new Date(mainRange.end);
-                const length = (end - start) / (1000 * 60 * 60 * 24) + 1;
+                const mainStart = new Date(mainRange.start);
+                const mainEnd = new Date(mainRange.end);
+
+                const length = (mainEnd - mainStart) / (1000 * 60 * 60 * 24) + 1;
+
+                const start = new Date(mainStart);
                 start.setDate(start.getDate() - length);
-                end.setDate(end.getDate() - length);
-                start.setHours(0, 0, 0, 0);
+
+                const shiftDays = (start.getDay() - mainRange.start.getDay() + 7) % 7; // Shift to align weekday
+                start.setDate(start.getDate() - shiftDays);
+
+                const end = new Date(start);
+
+                end.setDate(end.getDate() + length - 1);
                 end.setHours(0, 0, 0, 0);
+
                 return { start, end };
             },
             "same-period-last-year-match": () => {
@@ -702,12 +729,17 @@
             const rangeType = $(this).data('range');
             const type = $(this).data('type'); // main or compare
 
+            if (rangeType === 'custom') {
+                return;
+            }
+
             if (type === 'main') {
                 if (dateRanges[rangeType]) {
                     mainRange = dateRanges[rangeType]();
                     mainPreset = rangeType;
 
-                    console.log(`Main Range:`, mainRange);
+                    $('.main-preset').removeClass('active');
+                    $(this).addClass('active');
                 }
 
             } else if (type === 'compare') {
@@ -715,7 +747,8 @@
                     compareRange = compareLogic[rangeType]();
                     comparePreset = rangeType;
 
-                    console.log(`Compare Range for ${rangeType}:`, compareRange);
+                    $('.compare-preset').removeClass('active');
+                    $(this).addClass('active');
                 }
             }
 
@@ -750,16 +783,29 @@
                     calendarBody.append(daysGrid);
                 }
             }
+        }
 
-            // Highlight restored ranges
-            if (mainRange.start && mainRange.end) highlightRange();
-            if (compareRange.start && compareRange.end) highlightRange();
+        function scrollToFirstHighlighted() {
+            const $container = $('.calendar-container');
+            const $targetDay = $container.find('.range-blue.range-start').first();
+
+            if ($targetDay.length) {
+                const containerOffset = $container.offset().top;
+                const targetOffset = $targetDay.offset().top;
+                const scrollPosition = targetOffset - containerOffset + $container.scrollTop() - 90;
+
+                $container.animate({
+                    scrollTop: scrollPosition
+                }, 0); // Smooth scrolling
+            } else {
+                console.log('No element with the "range-blue" class found.');
+            }
         }
 
         function highlightRange() {
 
             $('.calendar-day').each(function () {
-
+                console.log('d')
                 $(this).removeClass('range-green range-orange range-blue range-start range-end');
 
                 let dataDate = $(this).data('date');
@@ -815,8 +861,9 @@
             });
         }
 
-        function fillInputs()
-        {
+        function fillInputs() {
+
+            console.log(mainRange)
             let customDateString = '';
             let startDateInput = $('.start-date-input').val(customDateString);
             let endDateInput = $('.end-date-input').val(customDateString);
@@ -867,6 +914,50 @@
 
                 compareEndDateInput.val(customDateString);
             }
+        }
+        restoreSavedDatepicker()
+        function restoreSavedDatepicker() {
+            // Restore mainRange
+            const storedMainRange = localStorage.getItem('mainRange');
+            if (storedMainRange) {
+                const parsedMainRange = JSON.parse(storedMainRange);
+                mainRange = {
+                    start: parsedMainRange.start ? new Date(parsedMainRange.start) : null,
+                    end: parsedMainRange.end ? new Date(parsedMainRange.end) : null
+                };
+            }
+
+            const storedCompareRange = localStorage.getItem('compareRange');
+            if (storedCompareRange) {
+                const parsedCompareRange = JSON.parse(storedCompareRange);
+                compareRange = {
+                    start: parsedCompareRange.start ? new Date(parsedCompareRange.start) : null,
+                    end: parsedCompareRange.end ? new Date(parsedCompareRange.end) : null
+                };
+            }
+
+            const storedCompare = localStorage.getItem('compare');
+            if (storedCompare !== null) {
+                isCompareEnabled = storedCompare === 'true';
+            }
+
+            const storedMainPreset = localStorage.getItem('mainPreset');
+            if (storedMainPreset) {
+                mainPreset = storedMainPreset;
+                $('[data-range="' + mainPreset + '"]').addClass('active');
+            }
+
+            const storedComparePreset = localStorage.getItem('compare-preset');
+            if (storedComparePreset) {
+                comparePreset = storedComparePreset;
+                $('[data-range="' + comparePreset + '"]').addClass('active');
+            }
+
+            // Example: Apply the state to a checkbox (if you have one in your UI)
+            $('#compareCheckbox').prop('checked', isCompareEnabled).change();
+            fillInputs();
+            highlightRange();
+            scrollToFirstHighlighted();
         }
     });
 </script>
