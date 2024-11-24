@@ -364,15 +364,15 @@
             <div class="datepicker-helper">
                 <div class="main-date-helper">
                     <div class="main-preset" data-type="main" data-range="custom">Custom</div>
-                    <div class="main-preset" data-type="main" data-range="this-week">This week</div>
                     <div class="main-preset" data-type="main" data-range="last-week">Last week</div>
-                    <div class="main-preset" data-type="main" data-range="last-7-days">Last 7 days</div>
-                    <div class="main-preset" data-type="main" data-range="last-28-days">Last 28 days</div>
+                    <div class="main-preset" data-type="main" data-range="this-month">This month</div>
+                    <div class="main-preset" data-type="main" data-range="last-month">Last month</div>
                     <div class="main-preset" data-type="main" data-range="last-30-days">Last 30 days</div>
-                    <div class="main-preset" data-type="main" data-range="last-90-days">Last 90 days</div>
+                    <div class="main-preset" data-type="main" data-range="this-year">This year</div>
+                    <div class="main-preset" data-type="main" data-range="last-year">Last year</div>
+                    <div class="main-preset" data-type="main" data-range="last-3-months">Last 3 months</div>
+                    <div class="main-preset" data-type="main" data-range="last-6-months">Last 6 months</div>
                     <div class="main-preset" data-type="main" data-range="last-12-months">Last 12 months</div>
-                    <div class="main-preset" data-type="main" data-range="last-calendar-year">Last calendar year</div>
-                    <div class="main-preset" data-type="main" data-range="this-year">This year (Jan – Today)</div>
                 </div>
                 <div class="divider"></div>
                 <div class="compare-checkbox">Compare <input id="compareCheckbox" type="checkbox"></div>
@@ -417,12 +417,12 @@
                 </div>
                 <div class="calendar-container">
                     <div class="calendar-header">
-                        <span>S</span>
                         <span>M</span>
                         <span>T</span>
                         <span>W</span>
                         <span>T</span>
                         <span>F</span>
+                        <span>S</span>
                         <span>S</span>
                     </div>
                     <div class="calendar-body">
@@ -575,7 +575,7 @@
                 $('.datepicker-compare-inputs').hide();
                 $('.compare-date-helper').hide();
             }
-            // highlightRange();
+            highlightRange();
         });
 
         // Date range calculations
@@ -646,18 +646,6 @@
 
                 return { start, end };
             },
-            "last-12-months": () => {
-                const now = new Date();
-                now.setHours(0, 0, 0, 0);
-                now.setDate(now.getDate() - 1);
-
-                const end = new Date(now);
-                const start = new Date(now);
-
-                start.setFullYear(now.getFullYear() - 1);
-
-                return { start, end };
-            },
             "last-calendar-year": () => {
                 const now = new Date();
                 const start = new Date(now.getFullYear() - 1, 0, 1);
@@ -672,6 +660,58 @@
                 start.setHours(0, 0, 0, 0);
                 now.setHours(0, 0, 0, 0);
                 return { start, end: now };
+            },
+            "this-month": () => {
+                const now = new Date();
+                const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                now.setHours(0, 0, 0, 0);
+                return { start, end: now };
+            },
+            "last-month": () => {
+                const now = new Date();
+                const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const end = new Date(now.getFullYear(), now.getMonth(), 0);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return { start, end };
+            },
+            "last-year": () => {
+                const now = new Date();
+                const start = new Date(now.getFullYear() - 1, 0, 1);
+                const end = new Date(now.getFullYear() - 1, 11, 31);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                return { start, end };
+            },
+            "last-3-months": () => {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                now.setDate(0);
+                const end = new Date(now);
+                const start = new Date(end);
+                start.setMonth(end.getMonth() - 3);
+                start.setDate(1);
+                return { start, end };
+            },
+            "last-6-months": () => {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                now.setDate(0);
+                const end = new Date(now);
+                const start = new Date(end);
+                start.setMonth(end.getMonth() - 6);
+                start.setDate(1);
+                return { start, end };
+            },
+            "last-12-months": () => {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                now.setDate(0);
+                const end = new Date(now);
+                const start = new Date(end);
+                start.setFullYear(end.getFullYear() - 1);
+                start.setDate(1);
+                return { start, end };
             }
         };
 
@@ -729,6 +769,7 @@
         $(document).on('click', '[data-range]', function () {
             const rangeType = $(this).data('range');
             const type = $(this).data('type'); // main or compare
+            let scrollTo = '';
 
             if (rangeType === 'custom') {
                 return;
@@ -741,6 +782,12 @@
 
                     $('.main-preset').removeClass('active');
                     $(this).addClass('active');
+                    phaseStatus = 'compare';
+                    scrollTo = '.range-blue.range-start';
+
+                    if (comparePreset && comparePreset !== 'custom') {
+                        $('[data-range="' + comparePreset + '"]').click();
+                    }
                 }
 
             } else if (type === 'compare') {
@@ -750,11 +797,15 @@
 
                     $('.compare-preset').removeClass('active');
                     $(this).addClass('active');
+                    phaseStatus = 'main';
+
+                    scrollTo = '.range-orange';
                 }
             }
 
             fillInputs();
             highlightRange();
+            scrollToFirstHighlighted(scrollTo);
         });
 
         generateCalendar(2022);
@@ -773,7 +824,8 @@
                     calendarBody.append(`<div class="calendar-month">${monthName} ${year}</div>`);
 
                     let daysGrid = '<div class="calendar-days">';
-                    for (let i = 0; i < date.getDay(); i++) {
+                    let firstDay = (date.getDay() + 6) % 7;
+                    for (let i = 0; i < firstDay; i++) {
                         daysGrid += '<div class="calendar-day empty"></div>'; // Empty spaces for alignment
                     }
 
@@ -786,15 +838,16 @@
             }
         }
 
-        function scrollToFirstHighlighted() {
+        function scrollToFirstHighlighted(scrollTo) {
             const $container = $('.calendar-container');
-            const $targetDay = $container.find('.range-blue.range-start').first();
+            const $targetDay = $container.find(scrollTo).first();
 
             if ($targetDay.length) {
                 const containerOffset = $container.offset().top;
                 const targetOffset = $targetDay.offset().top;
                 const scrollPosition = targetOffset - containerOffset + $container.scrollTop() - 90;
 
+                console.log(scrollPosition)
                 $container.animate({
                     scrollTop: scrollPosition
                 }, 0); // Smooth scrolling
@@ -806,7 +859,6 @@
         function highlightRange() {
 
             $('.calendar-day').each(function () {
-                console.log('d')
                 $(this).removeClass('range-green range-orange range-blue range-start range-end');
 
                 let dataDate = $(this).data('date');
@@ -863,8 +915,6 @@
         }
 
         function fillInputs() {
-
-            console.log(mainRange)
             let customDateString = '';
             let startDateInput = $('.start-date-input').val(customDateString);
             let endDateInput = $('.end-date-input').val(customDateString);
@@ -916,7 +966,9 @@
                 compareEndDateInput.val(customDateString);
             }
         }
-        restoreSavedDatepicker()
+
+        restoreSavedDatepicker();
+
         function restoreSavedDatepicker() {
             // Restore mainRange
             const storedMainRange = localStorage.getItem('mainRange');
@@ -963,7 +1015,7 @@
             $('#compareCheckbox').prop('checked', isCompareEnabled).change();
             fillInputs();
             highlightRange();
-            scrollToFirstHighlighted();
+            scrollToFirstHighlighted('.range-blue.range-start');
         }
     });
 </script>
