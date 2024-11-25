@@ -423,11 +423,11 @@
 <div class="datepicker-open-button">
     <div>
         <div style="display: flex;gap: 5px;">
-            <span style="background: #f2f2f2;font-size: .71rem;padding: 2px 7px;">Last 12 months</span>
-            <span style="font-weight: 500;font-size: .9rem;color:#4c4c4c">Nov 24, 2023 - Nov 24, 2024 </span>
+            <span style="background: #f2f2f2;font-size: .71rem;padding: 2px 7px;" class="selected-main-preset">Last 12 months</span>
+            <span style="font-weight: 500;font-size: .9rem;color:#4c4c4c" class="selected-main-range">Nov 24, 2023 - Nov 24, 2024 </span>
         </div>
         <div style="text-align: right;">
-            <span style="font-size: .8rem;color:#6c6c6c">Compare: Nov 24, 2023 - Nov 24, 2024 </span>
+            <span style="font-size: .8rem;color:#6c6c6c" class="selected-compare-range">Compare: Nov 24, 2023 - Nov 24, 2024 </span>
         </div>
     </div>
 
@@ -639,6 +639,8 @@
             localStorage.setItem('mainPreset', mainPreset);
             localStorage.setItem('compare-preset', comparePreset);
             localStorage.setItem('phaseStatus', phaseStatus);
+
+
         });
 
         $('.datepicker-open-button').on('click', function () {
@@ -648,6 +650,8 @@
             } else {
                 container.show();
                 positionDatepicker();
+
+                scrollToFirstHighlighted('.range-blue.range-start');
             }
         });
 
@@ -1106,7 +1110,6 @@
             $('#compareCheckbox').prop('checked', isCompareEnabled).change();
             fillInputs();
             highlightRange();
-            scrollToFirstHighlighted('.range-blue.range-start');
         }
 
         function positionDatepicker () {
