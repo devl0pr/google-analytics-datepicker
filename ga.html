@@ -115,9 +115,22 @@
             background: #d7e4ff3d;
         }
 
+        .datepicker-open-button {
+            padding: 10px 8px;
+            cursor: pointer;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .datepicker-open-button:hover {
+            background: #f2f2f2;
+        }
+
         .main-date-helper {
             padding: 10px 0;
         }
+
 
         .main-date-helper div, .compare-date-helper div {
             padding: 10px 12px;
@@ -210,7 +223,7 @@
 
         .input-box .input-1:focus {
             outline: none;
-            border: 2px solid #1a73e8;
+            /*border: 2px solid #1a73e8;*/
             transition: 250ms;
         }
 
@@ -353,12 +366,75 @@
             background-color: #f9ab0033
         }
 
+        .arw4 {
+            display: inline-block;
+            height: 12px;
+            position: relative;
+            width: 12px;
+        }
+
+        .arw4::after {
+            border-bottom-style: solid;
+            border-bottom-width: 2px;
+            border-right-style: solid;
+            border-right-width: 2px;
+            content: '';
+            display: inline-block;
+            height: 12px;
+            left: 0;
+            position: absolute;
+            top: 0;
+            width: 12px;
+        }
+
+        .arw4.is-triangle::after {
+            border-style: solid;
+            border-width: 0 0 6px 6px;
+            height: 0;
+            width: 0;
+        }
+
+        .arw4.is-bottom {
+            -moz-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            -webkit-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+
+        .arw4::after,
+        .arw4 .arw4::after {
+            border-color: #000000;
+        }
+
+        .arw4.is-triangle::after,
+        .arw4 .arw4.is-triangle::after {
+            border-color: transparent;
+            border-bottom-color: #000000;
+        }
+
+        .arw4::before,
+        .arw4 .arw4::before {
+            background-color: #000000;
+        }
     </style>
 </head>
 <body>
-<div class="datepicker-container">
-    <input type="text" class="date-input" placeholder="Select date" />
 
+<div class="datepicker-open-button">
+    <div>
+        <div style="display: flex;gap: 5px;">
+            <span style="background: #f2f2f2;font-size: .71rem;padding: 2px 7px;">Last 12 months</span>
+            <span style="font-weight: 500;font-size: .9rem;color:#4c4c4c">Nov 24, 2023 - Nov 24, 2024 </span>
+        </div>
+        <div style="text-align: right;">
+            <span style="font-size: .8rem;color:#6c6c6c">Compare: Nov 24, 2023 - Nov 24, 2024 </span>
+        </div>
+    </div>
+
+    <span class="arw4  is-triangle arw-bar is-bottom"></span>
+</div>
+
+<div class="datepicker-container" style="display: none; position: absolute;">
     <div class="datepicker">
         <div class="datepicker-body">
             <div class="datepicker-helper">
@@ -390,13 +466,13 @@
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">Start date</label>
-                                <input type="text" class="input-1 start-date-input" />
+                                <input data-type="main-start" type="text" class="input-1 start-date-input" readonly />
                             </div>
                         </div>
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">End date</label>
-                                <input type="text" class="input-1 end-date-input" />
+                                <input data-type="main-end" type="text" class="input-1 end-date-input" readonly />
                             </div>
                         </div>
                     </div>
@@ -404,13 +480,13 @@
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">Start date</label>
-                                <input type="text" class="input-1 compare-start-date-input" />
+                                <input data-type="compare-start" type="text" class="input-1 compare-start-date-input" readonly />
                             </div>
                         </div>
                         <div>
                             <div class="input-box active-grey">
                                 <label class="input-label">End date</label>
-                                <input type="text" class="input-1 compare-end-date-input" />
+                                <input data-type="compare-end" type="text" class="input-1 compare-end-date-input" readonly />
                             </div>
                         </div>
                     </div>
@@ -457,6 +533,8 @@
         let isCompareEnabled = false;
 
         let phaseStatus = 'main';
+
+        generateCalendar(2022);
 
         calendarBody.on('click', '.calendar-day:not(.empty)', function () {
             const selectedDate = new Date($(this).data('date'));
@@ -563,6 +641,20 @@
             localStorage.setItem('phaseStatus', phaseStatus);
         });
 
+        $('.datepicker-open-button').on('click', function () {
+            const container = $('.datepicker-container');
+            if (container.is(':visible')) {
+                container.hide();
+            } else {
+                container.show();
+                positionDatepicker();
+            }
+        });
+
+        // Recalculate position on window resize
+        $(window).on('resize', function () {
+            positionDatepicker();
+        });
 
         // Compare Checkbox Listener
         $('#compareCheckbox').on('change', function () {
@@ -808,7 +900,6 @@
             scrollToFirstHighlighted(scrollTo);
         });
 
-        generateCalendar(2022);
 
         function generateCalendar(startYear) {
             for (let year = startYear; year <= currentYear; year++) {
@@ -927,7 +1018,7 @@
             compareEndDateInput.val('');
 
             if (mainRange.start) {
-                customDateString = mainRange.start.toLocaleDateString("en-US", {
+                customDateString = mainRange.start.toLocaleDateString("de-De", {
                     month: "short",
                     day: "2-digit",
                     year: "numeric"
@@ -1017,6 +1108,27 @@
             highlightRange();
             scrollToFirstHighlighted('.range-blue.range-start');
         }
+
+        function positionDatepicker () {
+            const button = $('.datepicker-open-button');
+            const container = $('.datepicker-container');
+
+            if (container.is(':visible')) {
+                // Get button position and dimensions
+                const buttonOffset = button.offset();
+                const buttonHeight = button.outerHeight();
+
+                // Calculate the position for the datepicker
+                const top = buttonOffset.top + buttonHeight;
+                const left = buttonOffset.left;
+
+                // Position the datepicker
+                container.css({
+                    top: `${top}px`,
+                    left: `${left - button.width()}px `,
+                });
+            }
+        };
     });
 </script>
 </body>
